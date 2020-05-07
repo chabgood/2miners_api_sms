@@ -22,10 +22,11 @@ class F2Pool
   include HTTParty
   include ActionView::Helpers::NumberHelper
   
-  attr_accessor :amount, :usd_amount, :headers, :coin_amount
+  attr_accessor :amount, :usd_amount, :headers, :coin_amount, :coin
   def initialize()
     @amount=0
     @headers = { "X-CMC_PRO_API_KEY" => "#{ENV['API_KEY']}" }
+		@coin  = 'RVN'
     initialize_twilio_info
   end
 
@@ -39,7 +40,7 @@ class F2Pool
   def run
     get_2miners_info
     get_coinmarket_cap_data
-    #send_sms
+    send_sms
   end
 
 
@@ -47,7 +48,6 @@ class F2Pool
 
   def get_2miners_info
     response = HTTParty.get("https://rvn.2miners.com/api/accounts/RSPG5Lwx2vgs8XKbqrtSDj7XpJvbHzTwhy").parsed_response
-    p response["24hnumreward"]
     self.amount = number_to_human(response["24hnumreward"], precision: 4)
   end
 
@@ -58,10 +58,8 @@ class F2Pool
   end
   
   def send_sms
-    if self.workers_online > 0
-      client = Twilio::REST::Client.new(ENV["ACCT_SID"], ENV["AUTH_TOKEN"])
-      client.messages.create(from: ENV["FROM"], to: ENV["TO"], body: "Total #{self.coin}: #{self.coin_amount} \n Workers Online: #{workers_online} \n USD: $#{self.usd_amount}")
-    end
+    client = Twilio::REST::Client.new(ENV["ACCT_SID"], ENV["AUTH_TOKEN"])
+    client.messages.create(from: ENV["FROM"], to: ENV["TO"], body: "Total #{self.coin}: #{self.amount}\n USD: $#{self.coin_amount}")
   end
 end
 
