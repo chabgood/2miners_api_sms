@@ -53,10 +53,8 @@ class F2Pool
 
   def get_coinmarket_cap_data
     data = {'convert' => 'USD', 'amount' => "#{self.amount}", 'symbol'=>"RVN"}
-    p ENV["API"]
     coin_data = HTTParty.get(ENV["API"], query: data, headers: self.headers).parsed_response
     self.coin_amount = number_to_human(coin_data["data"]["quote"]["USD"]["price"],precision: 4)
-    p number_to_human(coin_data["data"]["quote"]["USD"]["price"],precision: 4)
   end
   
   def send_sms
