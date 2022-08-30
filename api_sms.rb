@@ -2,7 +2,7 @@ require 'bundler/inline'
 
 gemfile do
   source 'https://rubygems.org'
-  ruby '2.7.0'
+  ruby '3.0.1'
 
   gem 'httparty'
   gem 'twilio-ruby'
@@ -21,7 +21,7 @@ require 'twilio-ruby'
 class F2Pool
   include HTTParty
   include ActionView::Helpers::NumberHelper
-  
+
   attr_accessor :hash_rate, :amount, :usd_amount, :headers, :coin_amount, :coin
   def initialize()
     @amount=0
@@ -41,7 +41,6 @@ class F2Pool
   def run
     get_2miners_info
     get_coinmarket_cap_data
-    get_hash_rate
 		send_sms
   end
 
@@ -50,21 +49,16 @@ class F2Pool
 
   def get_2miners_info
     response = HTTParty.get("https://rvn.2miners.com/api/accounts/RSPG5Lwx2vgs8XKbqrtSDj7XpJvbHzTwhy").parsed_response
-		self.amount = response["stats"]["paid"] / 100000000
+    self.amount = response["payments"].sum{|h| h["amount"] / 100000000}
+    self.hash_rate = number_to_human(response["hashrate"])
   end
-  
-	def get_hash_rate
-		response = HTTParty.get("http://0.0.0.0:22333/api/v1/status").parsed_response
-		res = JSON.parse(response)
-		self.hash_rate = res["miner"]["total_hashrate"]
-	end
 
   def get_coinmarket_cap_data
     data = {'convert' => 'USD', 'amount' => "#{self.amount}", 'symbol'=>"RVN"}
     coin_data = HTTParty.get(ENV["API"], query: data, headers: self.headers).parsed_response
-    self.coin_amount = number_to_human(coin_data["data"]["quote"]["USD"]["price"],precision: 4)
+    self.coin_amount = number_to_human(coin_data["data"][0]["quote"]["USD"]["price"],precision: 3)
   end
-  
+
   def send_sms
     client = Twilio::REST::Client.new(ENV["ACCT_SID"], ENV["AUTH_TOKEN"])
     client.messages.create(from: ENV["FROM"], to: ENV["TO"], body: "Total #{self.coin}: #{self.amount}\n USD: $#{self.coin_amount}\n Hash Rate: #{self.hash_rate}")
