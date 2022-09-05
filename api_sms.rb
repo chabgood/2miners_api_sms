@@ -49,7 +49,7 @@ class F2Pool
 
   def get_2miners_info
     response = HTTParty.get("https://rvn.2miners.com/api/accounts/RSPG5Lwx2vgs8XKbqrtSDj7XpJvbHzTwhy").parsed_response
-    self.amount = response["payments"].sum{|h| h["amount"] / 100000000}
+    self.amount = response["stats"]["paid"] / 100000000
     self.hash_rate = number_to_human(response["hashrate"])
   end
 
