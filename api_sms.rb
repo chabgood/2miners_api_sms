@@ -26,7 +26,8 @@ class F2Pool
   def initialize()
     @amount=0
     @headers = { "X-CMC_PRO_API_KEY" => "#{ENV['API_KEY']}" }
-		@coin  = 'RVN'
+		@coin = ARGV[0]
+    @wallet = JSON.parse(ENV['WalletInfo']).fetch(ARGV[0], JSON.parse(ENV['WalletInfo'])['rvn'])
 		@hash_rate=0
     initialize_twilio_info
   end
@@ -48,15 +49,15 @@ class F2Pool
   private
 
   def get_2miners_info
-    response = HTTParty.get("https://rvn.2miners.com/api/accounts/RSPG5Lwx2vgs8XKbqrtSDj7XpJvbHzTwhy").parsed_response
-    self.amount = response["stats"]["paid"] / 100000000
+    response = HTTParty.get("https://#{@coin.downcase}.2miners.com/api/accounts/#{@wallet}").parsed_response
+    self.amount = response["stats"]["paid"] || 0 / 100000000
     self.hash_rate = number_to_human(response["hashrate"])
   end
 
   def get_coinmarket_cap_data
-    data = {'convert' => 'USD', 'amount' => "#{self.amount}", 'symbol'=>"RVN"}
+    data = {'convert' => 'USD', 'amount' => "#{self.amount}", 'symbol'=> @coin}
     coin_data = HTTParty.get(ENV["API"], query: data, headers: self.headers).parsed_response
-    self.coin_amount = number_to_human(coin_data["data"][0]["quote"]["USD"]["price"],precision: 3)
+    self.coin_amount = number_to_human(coin_data["data"][0]["quote"]["USD"]["price"], precision: 3)
   end
 
   def send_sms
