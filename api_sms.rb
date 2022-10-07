@@ -50,7 +50,7 @@ class F2Pool
 
   def get_2miners_info
     response = HTTParty.get("https://#{@coin.downcase}.2miners.com/api/accounts/#{@wallet}").parsed_response
-    self.amount = response["stats"]["paid"] || 0 / 100000000
+    self.amount = response["stats"]["paid"] / 100000000
     self.hash_rate = number_to_human(response["hashrate"])
   end
 
